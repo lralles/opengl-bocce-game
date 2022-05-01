@@ -94,6 +94,16 @@ void main()
 
         U = (theta + M_PI)/(2 * M_PI);
         V = (phi + M_PI_2)/M_PI;
+
+		      vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+	 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+
+    // Equação de Iluminação
+    float lambert = max(0,dot(n,l));
+
+	// Potencia para as luzes se apagarem mais rapido
+    color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
+	
     }
     else if ( object_id == BUNNY )
     {
@@ -117,16 +127,8 @@ void main()
 
         U = (position_model.x-minx)/(maxx-minx);
         V = (position_model.y-miny)/(maxy-miny);
-    }
-    else if ( object_id == PLANE )
-    {
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        U = texcoords.x;
-        V = texcoords.y;
-    }
 
-    // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+		      vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 	 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
     // Equação de Iluminação
@@ -135,6 +137,23 @@ void main()
 	// Potencia para as luzes se apagarem mais rapido
     color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
 	
+    }
+    else if ( object_id == PLANE )
+    {
+        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
+        U = texcoords.x;
+        V = texcoords.y;
+
+		vec3 Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
+
+     // Equação de Iluminação
+     float lambert = max(0,dot(n,l));
+
+   	// Potencia para as luzes se apagarem mais rapido
+      color.rgb = Kd0 * (lambert + 0.01);
+	
+    }
+
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
     // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
