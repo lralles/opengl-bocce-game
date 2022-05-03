@@ -23,12 +23,14 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Headers da biblioteca para carregar modelos obj
-#include <tiny_obj_loader.h>
+#include <tiny_obj_loader/tiny_obj_loader.h>
 
-#include <stb_image.h>
+#include <stb_image/stb_image.h>
+
+#include <textrendering/textrendering.h>
 
 // Headers locais, definidos na pasta "include/"
-#include "utils.h"
+//#include "utils.h" -> nao utilizado
 #include "matrices.h"
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
@@ -75,17 +77,6 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 
-// Declaração de funções auxiliares para renderizar texto dentro da janela
-// OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
-void TextRendering_Init();
-float TextRendering_LineHeight(GLFWwindow* window);
-float TextRendering_CharWidth(GLFWwindow* window);
-void TextRendering_PrintString(GLFWwindow* window, const std::string &str, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrix(GLFWwindow* window, glm::mat4 M, float x, float y, float scale = 1.0f);
-void TextRendering_PrintVector(GLFWwindow* window, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProduct(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProductMoreDigits(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
-void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
 
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
