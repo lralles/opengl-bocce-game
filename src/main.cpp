@@ -285,7 +285,17 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
-    // Ficamos em loop, renderizando, até que o usuário feche a janela
+	// cria um vetor com 7 bolas e preenche ele com valores aleatorios para teste	
+	Ball balls[7];
+	for(int i=0 ; i<7 ; i++){
+		balls[i].radius = 0.1f;
+		balls[i].position = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
+		balls[i].velocity = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
+	}
+
+		  
+	 float t_prev = glfwGetTime();
+	 // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
         // Aqui executamos as operações de renderização
@@ -390,25 +400,22 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
 
-			// Duas bolas no cenario
-		  Ball ball1;
-		  ball1.radius = 0.1f;
-		  ball1.position = glm::vec3(1.0f,1.0f,1.0f);
+			// definicao do time_delta
+			float t_now = glfwGetTime();
+			float t_delta = t_now - t_prev;
+			t_prev = t_now;
+			
 
-		  Ball ball2;
-		  ball2.radius = 0.2f;
-		  ball2.position = glm::vec3(1.0f,0-1.0f,0.0f);
-
-
-		  model = Matrix_Translate( ball1.position.x,ball1.position.y,ball1.position.z) * Matrix_Scale(ball1.radius, ball1.radius, ball1.radius);        
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
-
-		  	model = Matrix_Translate( ball2.position.x,ball2.position.y,ball2.position.z) * Matrix_Scale(ball2.radius, ball2.radius, ball2.radius);        
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
+			for (int i = 0 ; i<7 ; i++){
+				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
+			}
+			for ( int i = 0 ;i<7 ; i++){
+				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z) 
+					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);        
+				glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+				glUniform1i(object_id_uniform, SPHERE);
+				DrawVirtualObject("sphere");
+			}
 
 
 		  // Por infos na tela
