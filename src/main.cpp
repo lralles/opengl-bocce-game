@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include "collisions.h"
 
 // Headers abaixo são específicos de C++
 #include <map>
@@ -31,6 +32,9 @@
 #include "utils.h"
 #include "matrices.h"
 
+#define M_PI   3.14159265358979323846
+#define M_PI_2 1.57079632679489661923
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -53,7 +57,7 @@ struct ObjModel
 
         if (!ret)
             throw std::runtime_error("Erro ao carregar modelo.");
-        
+
         printf("OK.\n");
     }
 };
@@ -115,13 +119,6 @@ struct SceneObject
     glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
     glm::vec3    bbox_max;
 };
-
-typedef struct{
-	float radius;
-	glm::vec3 position;
-	glm::vec3 velocity;
-}Ball;
-
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
@@ -256,10 +253,6 @@ int main(int argc, char* argv[])
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    ObjModel bunnymodel("../../data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
@@ -285,7 +278,7 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
-	// cria um vetor com 7 bolas e preenche ele com valores aleatorios para teste	
+	// cria um vetor com 7 bolas e preenche ele com valores aleatorios para teste
 	Ball balls[7];
 	for(int i=0 ; i<7 ; i++){
 		balls[i].radius = 0.1f;
@@ -293,8 +286,8 @@ int main(int argc, char* argv[])
 		balls[i].velocity = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
 	}
 
-		  
-	 float t_prev = glfwGetTime();
+
+    float t_prev = glfwGetTime();
 	 // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -404,14 +397,15 @@ int main(int argc, char* argv[])
 			float t_now = glfwGetTime();
 			float t_delta = t_now - t_prev;
 			t_prev = t_now;
-			
+
 
 			for (int i = 0 ; i<7 ; i++){
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
+
 			}
 			for ( int i = 0 ;i<7 ; i++){
-				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z) 
-					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);        
+				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z)
+					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);
 				glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
 				glUniform1i(object_id_uniform, SPHERE);
 				DrawVirtualObject("sphere");
@@ -941,7 +935,7 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id)
         fprintf(stderr, "%s", output.c_str());
     }
 
-    // Os "Shader Objects" podem ser marcados para deleção após serem linkados 
+    // Os "Shader Objects" podem ser marcados para deleção após serem linkados
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
 
@@ -1043,21 +1037,21 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos parâmetros da câmera com os deslocamentos
         g_CameraTheta -= 0.01f*dx;
         g_CameraPhi   += 0.01f*dy;
-    
+
         // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
         float phimax = 3.141592f/2;
         float phimin = -phimax;
-    
+
         if (g_CameraPhi > phimax)
             g_CameraPhi = phimax;
-    
+
         if (g_CameraPhi < phimin)
             g_CameraPhi = phimin;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1069,7 +1063,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1081,11 +1075,11 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos parâmetros da antebraço com os deslocamentos
         g_TorsoPositionX += 0.01f*dx;
         g_TorsoPositionY -= 0.01f*dy;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1308,7 +1302,7 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     if ( ellapsed_seconds > 1.0f )
     {
         numchars = snprintf(buffer, 20, "%.2f fps", ellapsed_frames / ellapsed_seconds);
-    
+
         old_seconds = seconds;
         ellapsed_frames = 0;
     }
