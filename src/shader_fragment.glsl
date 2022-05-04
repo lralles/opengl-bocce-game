@@ -22,6 +22,7 @@ uniform mat4 projection;
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
+#define HAND 3
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -32,6 +33,7 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -84,7 +86,7 @@ void main()
         //   variável position_model
 
       vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-		vec4 c = bbox_center;
+      vec4 c = bbox_center;
 		vec4 p_line = c + (position_model-c)/length(position_model-c);
 		vec4 p_vector = p_line - c;
 		float theta = atan(p_vector.x, p_vector.z);
@@ -103,7 +105,7 @@ void main()
 
 	// Potencia para as luzes se apagarem mais rapido
     color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
-	
+
     }
     else if ( object_id == BUNNY )
     {
@@ -128,15 +130,15 @@ void main()
         U = (position_model.x-minx)/(maxx-minx);
         V = (position_model.y-miny)/(maxy-miny);
 
-		      vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-	 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
 	// Potencia para as luzes se apagarem mais rapido
     color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
-	
+
     }
     else if ( object_id == PLANE )
     {
@@ -151,7 +153,15 @@ void main()
 
    	// Potencia para as luzes se apagarem mais rapido
       color.rgb = Kd0 * (lambert + 0.01);
-	
+
+    }
+
+    else if (object_id == HAND){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        vec3 Kd0 = texture(TextureImage3, vec2(U,V)).rgb;
+        float lambert = max(0,dot(n,l));
     }
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
@@ -171,5 +181,5 @@ void main()
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-} 
+}
 

@@ -243,10 +243,11 @@ int main(int argc, char* argv[])
     // para renderização. Veja slides 176-196 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
     LoadShadersFromFiles();
 
-    // Carregamos duas imagens para serem utilizadas como textura
+    // Carregamos algumas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-	 LoadTextureImage("../../data/wood.jpg"); //Texture 3
+    LoadTextureImage("../../data/wood.jpg"); //Texture 2
+    LoadTextureImage("../../data/skin.jpg"); // texture 3
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -256,6 +257,10 @@ int main(int argc, char* argv[])
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
+
+    ObjModel handmodel("../../data/hand.obj");
+    ComputeNormals(&handmodel);
+    BuildTrianglesAndAddToVirtualScene(&handmodel);
 
     if ( argc > 1 )
     {
@@ -367,8 +372,8 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
+        #define HAND  1
+        #define PLANE 2
 
         // Desenhamos o plano do chão
         model = Matrix_Scale(1.0f,1.0f,2.0f) * Matrix_Translate(0.0f,-1.0f,-1.0f);
@@ -391,6 +396,11 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
+
+        model = Matrix_Scale(2.0f,2.0f,2.0f) * Matrix_Translate(0.0f,1.0f,1.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, HAND);
+        DrawVirtualObject("default");
 
 
 			// definicao do time_delta
@@ -564,6 +574,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(program_id, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage3"), 3);
     glUseProgram(0);
 }
 
