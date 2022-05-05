@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include "collisions .h"
 
 // Headers abaixo são específicos de C++
 #include <map>
@@ -107,13 +108,6 @@ struct SceneObject
     glm::vec3    bbox_max;
 };
 
-typedef struct{
-	float radius;
-	glm::vec3 position;
-	glm::vec3 velocity;
-}Ball;
-
-
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
 // A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
@@ -170,6 +164,7 @@ GLint bbox_max_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
+ 
 
 int main(int argc, char* argv[])
 {
@@ -188,6 +183,7 @@ int main(int argc, char* argv[])
     // Pedimos para utilizar OpenGL versão 3.3 (ou superior)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
 
     #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -398,6 +394,7 @@ int main(int argc, char* argv[])
 			
 
 			for (int i = 0 ; i<7 ; i++){
+				balls[i].applyAmbientForces(t_delta);
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
 			}
 			for ( int i = 0 ;i<7 ; i++){
@@ -407,7 +404,6 @@ int main(int argc, char* argv[])
 				glUniform1i(object_id_uniform, SPHERE);
 				DrawVirtualObject("sphere");
 			}
-
 
 		  // Por infos na tela
         TextRendering_ShowEulerAngles(window);
