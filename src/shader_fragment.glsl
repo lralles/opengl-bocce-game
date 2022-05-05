@@ -59,7 +59,7 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4 l = normalize(vec4(1.0,0.5,0.5,0.0));
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -95,14 +95,14 @@ void main()
         U = (theta + M_PI)/(2 * M_PI);
         V = (phi + M_PI_2)/M_PI;
 
-		      vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+	 vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 	 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
 	// Potencia para as luzes se apagarem mais rapido
-    color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
+    color.rgb =  Kd0 * (lambert + 0.5);
 	
     }
     else if ( object_id == BUNNY )
@@ -150,7 +150,7 @@ void main()
      float lambert = max(0,dot(n,l));
 
    	// Potencia para as luzes se apagarem mais rapido
-      color.rgb = Kd0 * (lambert + 0.01);
+      color.rgb = Kd0 * (lambert + 0.3);
 	
     }
 

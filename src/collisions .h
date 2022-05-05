@@ -11,7 +11,7 @@ typedef struct{
 	glm::vec3 position;
 	glm::vec3 velocity;
 	float gravity = 0.6f;
-	float drag = 0.1f;
+	float drag = 0.05f;
 	bool onFloor = false;
 	bool stationary = false;
 
@@ -22,6 +22,7 @@ typedef struct{
 		}else if (!stationary){
 			applyDrag(t_delta);
 		}
+		checkWalls();
 	}
 
 	void applyGravity(float t_delta){
@@ -32,6 +33,10 @@ typedef struct{
 			velocity.y -= t_delta * gravity;
 		}
 		else{
+			if(fabs(velocity.y) > 0.2f){
+				velocity.y *= -0.3f;
+				return;
+			}
 			onFloor = true;
 			velocity.y = 0.0f;
 			position.y = -1.0f + radius;
@@ -52,6 +57,15 @@ typedef struct{
 		velocity.x = velocity.x/velocityModule * newVelocityModule;
 		velocity.z = velocity.z/velocityModule * newVelocityModule;
 	}
+	void checkWalls(){
+		if (position.x > 1.0f - radius || position.x < -1.0f + radius){
+			velocity.x *= -1;
+		}
+		if(position.z > 4.0f - radius || position.z < -4.0f + radius){
+			velocity.z *= -1;
+		}
+	}
+
 }Ball;
 
 int distance(int a, int b);

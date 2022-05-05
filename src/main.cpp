@@ -352,6 +352,8 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
+
+
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
@@ -381,7 +383,7 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
-		 	model = Matrix_Translate( 0.0f,0.0f,-3.0f) * Matrix_Rotate_X(	M_PI/2 );
+		 	model = Matrix_Translate( 0.0f,0.0f,-4.0f) * Matrix_Rotate_X(	M_PI/2 );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -404,7 +406,6 @@ int main(int argc, char* argv[])
 				glUniform1i(object_id_uniform, SPHERE);
 				DrawVirtualObject("sphere");
 			}
-
 		  // Por infos na tela
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
