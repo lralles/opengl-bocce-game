@@ -35,6 +35,10 @@
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
 
+/*vector<vector<double>> curveVertex;
+float x,y,z;
+glm::vec3 bezierPoints(float t, vector<vector<double>> points);*/
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -248,6 +252,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
     LoadTextureImage("../../data/wood.jpg"); //Texture 2
     LoadTextureImage("../../data/skin.jpg"); // texture 3
+    LoadTextureImage("../../data/grey.jpg"); // texture 4
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -372,7 +377,8 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define SPHERE 0
-        #define HAND  1
+        #define SPHERE_2 1
+        #define HAND  3
         #define PLANE 2
 
         // Desenhamos o plano do chão
@@ -397,10 +403,18 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
-        model = Matrix_Scale(2.0f,2.0f,2.0f) * Matrix_Translate(0.0f,1.0f,1.0f);
+        model = Matrix_Translate(0.0f,-0.5f,0.3f) * Matrix_Rotate_X(M_PI/2) * Matrix_Rotate_Z(M_PI/2) * Matrix_Scale(0.01f,0.01f,0.01f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, HAND);
         DrawVirtualObject("default");
+
+        // renderizacao do bolim
+
+        model = Matrix_Translate(0.0,-0.44,0.3)
+					* Matrix_Scale(0.08, 0.08, 0.08);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, SPHERE_2);
+        DrawVirtualObject("sphere");
 
 
 			// definicao do time_delta
@@ -420,6 +434,7 @@ int main(int argc, char* argv[])
 				glUniform1i(object_id_uniform, SPHERE);
 				DrawVirtualObject("sphere");
 			}
+        //<vector<vector<double>> points(3,vector<double>(3));
 
 
 		  // Por infos na tela
@@ -575,6 +590,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(program_id, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage2"), 2);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage4"), 4);
     glUseProgram(0);
 }
 

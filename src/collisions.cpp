@@ -18,6 +18,6 @@ bool checkCollision(Ball ball, Ball ball2)
 /*
 bool checkCollisionPlane(Ball ball, glm::mat4 mod)
 {
-    // colisão das paredes com a bola, terminar e testar!
+    // colisão das paredes com a bola, terminar!
 }*/
 

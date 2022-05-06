@@ -20,7 +20,7 @@ uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
-#define BUNNY  1
+#define SPHERE_2 1
 #define PLANE  2
 #define HAND 3
 uniform int object_id;
@@ -34,6 +34,7 @@ uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -66,6 +67,13 @@ void main()
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
+    vec4 r = -l+2*n*(dot(n,l));
+
+    vec3 Kd;
+    vec3 Ks;
+    vec3 Ka;
+    float q;
+
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
@@ -97,8 +105,8 @@ void main()
         U = (theta + M_PI)/(2 * M_PI);
         V = (phi + M_PI_2)/M_PI;
 
-		      vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-	 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
@@ -107,12 +115,13 @@ void main()
     color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
 
     }
+    /*
     else if ( object_id == BUNNY )
     {
         // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
         // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
         // o slides 99-104 do documento Aula_20_Mapeamento_de_Texturas.pdf,
-        // e também use as variáveis min*/max* definidas abaixo para normalizar
+        // e também use as variáveis min* max* definidas abaixo para normalizar
         // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
         // tanto, veja por exemplo o mapeamento da variável 'p_v' utilizando
         // 'h' no slides 158-160 do documento Aula_20_Mapeamento_de_Texturas.pdf.
@@ -132,6 +141,8 @@ void main()
 
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+    vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
+
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
@@ -139,7 +150,7 @@ void main()
 	// Potencia para as luzes se apagarem mais rapido
     color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
 
-    }
+    }*/
     else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
@@ -160,8 +171,45 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
 
-        vec3 Kd0 = texture(TextureImage3, vec2(U,V)).rgb;
+        vec3 Kd3 = texture(TextureImage3, vec2(U,V)).rgb;
+
         float lambert = max(0,dot(n,l));
+
+        color.rgb = Kd3 * (lambert + 0.03);
+    }
+
+    else if (object_id == SPHERE_2){
+
+        Kd = vec3(0.08,0.4,0.8);
+        Ks = vec3(0.6,0.6,0.6);
+        Ka = vec3(0.02,0.2,0.2);
+        q = 32.0;
+
+        U = texcoords.x;
+        V = texcoords.y;
+
+        vec3 Kd4 = texture(TextureImage4, vec2(U,V)).rgb;
+
+        // Espectro da fonte de iluminação
+    vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz7
+    // Espectro da luz ambiente
+    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+
+    float n_l = dot(n,l);
+
+    // Termo difuso utilizando a lei dos cossenos de Lambert
+    vec3 lambert_diffuse_term = Kd*I*max(0,n_l); // PREENCHA AQUI o termo difuso de Lambert
+
+    // Termo ambiente
+    vec3 ambient_term = Ka*Ia; // PREENCHA AQUI o termo ambiente
+
+    float r_v = dot(r,v);
+
+    // Termo especular utilizando o modelo de iluminação de Phong
+    vec3 phong_specular_term  = Ks*I*pow(max(r_v,0),q);// PREENCH AQUI o termo especular de Phong
+
+    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+
     }
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
@@ -177,6 +225,8 @@ void main()
     //    transparentes que estão mais longe da câmera).
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
+
+
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
