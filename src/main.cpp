@@ -275,7 +275,6 @@ int main(int argc, char* argv[])
 	// cria um vetor com 7 bolas e preenche ele com valores aleatorios para teste	
 	Ball balls[7];
 	for(int i=0 ; i<7 ; i++){
-		balls[i].radius = 0.1f;
 		balls[i].position = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
 		balls[i].velocity = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
 	}
@@ -352,8 +351,6 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-
-
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
@@ -396,6 +393,15 @@ int main(int argc, char* argv[])
 			
 
 			for (int i = 0 ; i<7 ; i++){
+				for(int j=0 ; j<7; j++){
+					if(i>j){
+						if( checkCollision(balls[i],balls[j]) ){
+							applyCollision(&balls[i],&balls[j]);
+
+							printf("%d bateu em %d\n", i,j);
+						}	
+					}
+				}
 				balls[i].applyAmbientForces(t_delta);
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
 			}

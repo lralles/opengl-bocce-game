@@ -7,7 +7,7 @@
 #define X_AXIS 0
 
 typedef struct{
-	float radius;
+	float radius = 0.1f;
 	glm::vec3 position;
 	glm::vec3 velocity;
 	float gravity = 0.6f;
@@ -69,4 +69,9 @@ typedef struct{
 }Ball;
 
 int distance(int a, int b);
-bool checkCollision(Ball ball, Ball ball2);
+
+bool checkCollision(Ball ball1, Ball ball2);
+void applyCollision(Ball* ball1, Ball* ball2);
+
+float dotproduct_vec3(glm::vec3 v1, glm::vec3 v2);
+float norm_vec3(glm::vec3 v);
