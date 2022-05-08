@@ -33,7 +33,7 @@
 // Headers locais, definidos na pasta "include/"
 //#include "utils.h" -> nao utilizado
 #include "matrices.h"
-
+#include "constants.h"
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -20.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -362,25 +362,24 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
-
+		  
         // Desenhamos o plano do chão
-        model = Matrix_Scale(1.0f,1.0f,2.0f) * Matrix_Translate(0.0f,-1.0f,-1.0f);
+        model = Matrix_Scale(WIDTH,1.0f,DEPTH/2) * Matrix_Translate(0.0f,-1.0f,-1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
-
-			// Planos que compoe a "caixa"
-		  model = Matrix_Scale(1.0f,1.0f,2.0f) * Matrix_Translate(1.0f,0.0f,-1.0f) * Matrix_Rotate_Z(	M_PI/2 );
+			// Plano da Direita
+		  model = Matrix_Scale(1.0f,HEIGHT,DEPTH/2) * Matrix_Translate(WIDTH,0.0f,-1.0f) * Matrix_Rotate_Z(	M_PI/2 );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
-
-		  model = Matrix_Scale(1.0f,1.0f,2.0f) * Matrix_Translate(- 1.0f,0.0f,-1.0f) * Matrix_Rotate_Z(	M_PI/2 );
+			//Plano da Esquerda
+		  model = Matrix_Scale(1.0f,HEIGHT,DEPTH/2) * Matrix_Translate(-WIDTH,0.0f,-1.0f) * Matrix_Rotate_Z(	M_PI/2 );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
-
-		 	model = Matrix_Translate( 0.0f,0.0f,-4.0f) * Matrix_Rotate_X(	M_PI/2 );
+			//Plano de Traz
+		 	model = Matrix_Scale(WIDTH,HEIGHT,1.0f) * Matrix_Translate( 0.0f,0.0f,-DEPTH) * Matrix_Rotate_X(	M_PI/2 );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -389,22 +388,27 @@ int main(int argc, char* argv[])
 			// definicao do time_delta
 			float t_now = glfwGetTime();
 			float t_delta = t_now - t_prev;
+			t_delta *= 2.0f;
 			t_prev = t_now;
 			
 
+
+			// Para todas as bolas
 			for (int i = 0 ; i<7 ; i++){
+				// checa e aplica colisoes
 				for(int j=0 ; j<7; j++){
 					if(i>j){
 						if( checkCollision(balls[i],balls[j]) ){
 							applyCollision(&balls[i],&balls[j]);
-
-							printf("%d bateu em %d\n", i,j);
 						}	
 					}
 				}
+				// aplica forcas do ambiente -> atrito e gravidade
 				balls[i].applyAmbientForces(t_delta);
+				// Atualiza a posicao
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
 			}
+			// desenha todas as bolas
 			for ( int i = 0 ;i<7 ; i++){
 				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z) 
 					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);        

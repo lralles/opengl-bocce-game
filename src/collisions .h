@@ -1,20 +1,18 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "constants.h"
 
-#define Z_AXIS 2
-#define Y_AXIS 1
-#define X_AXIS 0
-
+#define RADIUS 0.1f
+// Objeto Bola
 typedef struct{
-	float radius = 0.1f;
+	float radius = RADIUS; 
+
 	glm::vec3 position;
 	glm::vec3 velocity;
-	float gravity = 0.6f;
-	float drag = 0.05f;
+
 	bool onFloor = false;
 	bool stationary = false;
-
 
 	void applyAmbientForces(float t_delta){
 		if(!onFloor){
@@ -30,7 +28,7 @@ typedef struct{
 			return;
 		}
 		if(position.y > -1.0f + radius ){
-			velocity.y -= t_delta * gravity;
+			velocity.y -= t_delta * GRAVITY;
 		}
 		else{
 			if(fabs(velocity.y) > 0.2f){
@@ -48,27 +46,26 @@ typedef struct{
 			return;
 		}
 		float velocityModule = sqrt(velocity.x*velocity.x + velocity.z*velocity.z);
-		if (velocityModule <= drag * t_delta){
+		if (velocityModule <= DRAG * t_delta){
 			stationary = true;
 			velocity.x = velocity.z = 0.0f;
 			return;
 		}
-		float newVelocityModule = velocityModule - drag * t_delta;
+		float newVelocityModule = velocityModule - DRAG * t_delta;
 		velocity.x = velocity.x/velocityModule * newVelocityModule;
 		velocity.z = velocity.z/velocityModule * newVelocityModule;
 	}
 	void checkWalls(){
-		if (position.x > 1.0f - radius || position.x < -1.0f + radius){
+		if (fabs(position.x) > WIDTH - radius){
 			velocity.x *= -1;
 		}
-		if(position.z > 4.0f - radius || position.z < -4.0f + radius){
+		if(fabs(position.z) > DEPTH - radius ){
 			velocity.z *= -1;
 		}
 	}
 
 }Ball;
 
-int distance(int a, int b);
 
 bool checkCollision(Ball ball1, Ball ball2);
 void applyCollision(Ball* ball1, Ball* ball2);

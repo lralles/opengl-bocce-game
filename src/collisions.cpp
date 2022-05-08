@@ -3,7 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "collisions .h"
 
-
+// Checa se 2 bolas colidiram
 bool checkCollision(Ball ball1, Ball ball2){
 	float distance = sqrt(
 		pow(ball1.position.x - ball2.position.x,2) +
@@ -17,14 +17,7 @@ bool checkCollision(Ball ball1, Ball ball2){
 }
 
 
-
-float dotproduct_vec3(glm::vec3 v1, glm::vec3 v2){
-	return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
-}
-float norm_vec3(glm::vec3 v){
-	return sqrt(v.x*v.x +v.y*v.y + v.z*v.z);
-}
-
+// Aplica uma colisao elastica em 2 bolas
 void applyCollision(Ball* ball1, Ball* ball2){
 	glm::vec3 v1 = ball1->velocity;
 	glm::vec3 v2 = ball2->velocity;
@@ -48,4 +41,22 @@ void applyCollision(Ball* ball1, Ball* ball2){
 	}else{
 		ball2->stationary = true;
 	}
+	
+	if(ball1->velocity.y < 0.0f){
+		ball1->velocity.y = 0.0f;
+	}
+	if(ball2->velocity.y < 0.0f){
+		ball2->velocity.y = 0.0f;
+	}
+
+
+}
+
+
+// implementa dotproduct e norma de vec3
+float dotproduct_vec3(glm::vec3 v1, glm::vec3 v2){
+	return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
+float norm_vec3(glm::vec3 v){
+	return sqrt(v.x*v.x +v.y*v.y + v.z*v.z);
 }
