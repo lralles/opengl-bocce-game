@@ -139,6 +139,10 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
 
+        Kd = vec3(0.9,0.0,0.0);
+        Ks = vec3(0.8,0.8,0.8);
+        Ka = vec3(0.8,0.0,0.0);
+
         vec3 Kd3 = texture(TextureImage3, vec2(U,V)).rgb;
 
         float lambert = max(0,dot(n,l));

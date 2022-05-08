@@ -35,9 +35,7 @@
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
 
-/*vector<vector<double>> curveVertex;
-float x,y,z;
-glm::vec3 bezierPoints(float t, vector<vector<double>> points);*/
+bool g_UsePerspectiveProjection = true;
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -162,7 +160,7 @@ float g_TorsoPositionX = 0.0f;
 float g_TorsoPositionY = 0.0f;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
-bool g_UsePerspectiveProjection = true;
+//bool g_UsePerspectiveProjection = true;
 
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
@@ -323,6 +321,7 @@ int main(int argc, char* argv[])
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
+
         float r = g_CameraDistance;
         float y = r*sin(g_CameraPhi);
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
@@ -334,6 +333,9 @@ int main(int argc, char* argv[])
         glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+        camera_view_vector = glm::vec4(-x, -y, -z, 0.0f);
+        glm::vec4 w = -camera_view_vector / norm(camera_view_vector);
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -403,7 +405,11 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
-        model = Matrix_Translate(0.0f,-0.5f,0.3f) * Matrix_Rotate_X(M_PI/2) * Matrix_Rotate_Z(M_PI/2) * Matrix_Scale(0.01f,0.01f,0.01f);
+        model = Matrix_Translate(0.0f,-0.5f,0.3f)
+        * Matrix_Rotate_X(M_PI/2)
+        * Matrix_Rotate_Z(M_PI/2)
+        * Matrix_Rotate_X(g_AngleX)
+        * Matrix_Scale(0.01f,0.01f,0.01f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, HAND);
         DrawVirtualObject("default");
@@ -439,7 +445,7 @@ int main(int argc, char* argv[])
 
 		  // Por infos na tela
         TextRendering_ShowEulerAngles(window);
-        TextRendering_ShowProjection(window);
+//        TextRendering_ShowProjection(window);
         TextRendering_ShowFramesPerSecond(window);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
@@ -1191,19 +1197,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_UsePerspectiveProjection = false;
     }
 
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
-    }
 
-    // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    {
-        LoadShadersFromFiles();
-        fprintf(stdout,"Shaders recarregados!\n");
-        fflush(stdout);
-    }
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
@@ -1289,20 +1283,6 @@ void TextRendering_ShowEulerAngles(GLFWwindow* window)
     TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
 }
 
-// Escrevemos na tela qual matriz de projeção está sendo utilizada.
-void TextRendering_ShowProjection(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float lineheight = TextRendering_LineHeight(window);
-    float charwidth = TextRendering_CharWidth(window);
-
-    if ( g_UsePerspectiveProjection )
-        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-    else
-        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-}
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
 // second).
