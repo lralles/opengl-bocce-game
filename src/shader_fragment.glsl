@@ -72,6 +72,8 @@ void main()
     vec3 Kd;
     vec3 Ks;
     vec3 Ka;
+    vec3 I;
+    vec3 Ia;
     float q;
 
     // Coordenadas de textura U e V
@@ -95,62 +97,28 @@ void main()
 
       vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
       vec4 c = bbox_center;
-		vec4 p_line = c + (position_model-c)/length(position_model-c);
-		vec4 p_vector = p_line - c;
-		float theta = atan(p_vector.x, p_vector.z);
-		float phi = asin(p_vector.y);
+      vec4 p_line = c + (position_model-c)/length(position_model-c);
+      vec4 p_vector = p_line - c;
+      float theta = atan(p_vector.x, p_vector.z);
+      float phi = asin(p_vector.y);
 
+    U = (theta + M_PI)/(2 * M_PI);
+    V = (phi + M_PI_2)/M_PI;
 
+    // iluminacao blinn-phong nas bolas
+    Kd = vec3(0.2,0.3,1.0);
+    I = vec3(1.0,1.0,1.0);
+    Ia = vec3(0,1.0,0);
+    Ka = vec3(0.2,0.3,1.0);
+    Ks = vec3(1.0,1.0,1.0);
+    float q_l = 80;
 
-        U = (theta + M_PI)/(2 * M_PI);
-        V = (phi + M_PI_2)/M_PI;
-
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
-
-    // Equação de Iluminação
-    float lambert = max(0,dot(n,l));
-
-	// Potencia para as luzes se apagarem mais rapido
-    color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
-
+    vec4 h = (v+l)/normalize(v+l);
+    // Cor final com correção gamma, considerando monitor sRGB.
+    // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
+    color.rgb = Kd*I*max(0,dot(n,l)) + Ka*Ia + Ks*I*pow(dot(n,h),q_l);
     }
-    /*
-    else if ( object_id == BUNNY )
-    {
-        // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
-        // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
-        // o slides 99-104 do documento Aula_20_Mapeamento_de_Texturas.pdf,
-        // e também use as variáveis min* max* definidas abaixo para normalizar
-        // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
-        // tanto, veja por exemplo o mapeamento da variável 'p_v' utilizando
-        // 'h' no slides 158-160 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // Veja também a Questão 4 do Questionário 4 no Moodle.
 
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x-minx)/(maxx-minx);
-        V = (position_model.y-miny)/(maxy-miny);
-
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
-    vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
-
-
-    // Equação de Iluminação
-    float lambert = max(0,dot(n,l));
-
-	// Potencia para as luzes se apagarem mais rapido
-    color.rgb = Kd1 * pow((1.0-lambert),15) + Kd0 * (lambert + 0.01);
-
-    }*/
     else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
