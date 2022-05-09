@@ -281,6 +281,7 @@ int main(int argc, char* argv[])
 		balls[i].velocity = glm::vec3(0.0f,0.0f,0.0f);
 	}
 
+	 int winner;
 	 int toThrow = 0;
 	 float t_prev = glfwGetTime();
 	 // Ficamos em loop, renderizando, até que o usuário feche a janela
@@ -439,15 +440,19 @@ int main(int argc, char* argv[])
 				g_release = false;
 				toThrow ++;
 			}
+			if(toThrow == BALLS){
+				winner = game.getWinner(balls);
+				if (winner%2 == 1){
+					printf("Azul ganhou");
+				}else {
+					printf("Vermelho ganhou");
+				}
+				toThrow = 8;		
+			}
         glfwSwapBuffers(window);
         glfwPollEvents(); // Obtem os eventos
     }
-	 int winner = game.getWinner(balls);
-	 if (winner%2 == 1){
-		 printf("Azul ganhou");
-	 }else {
-		  printf("Vermelho ganhou");
-	 }
+
     glfwTerminate();
     return 0;
 }
