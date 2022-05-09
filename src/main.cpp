@@ -36,6 +36,9 @@
 #include "constants.h"
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
+
+#define M_PI   3.14159265358979323846
+#define M_PI_2 1.57079632679489661923
 struct ObjModel
 {
     tinyobj::attrib_t                 attrib;
@@ -56,7 +59,7 @@ struct ObjModel
 
         if (!ret)
             throw std::runtime_error("Erro ao carregar modelo.");
-        
+
         printf("OK.\n");
     }
 };
@@ -162,7 +165,7 @@ GLint bbox_max_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
- 
+
 
 int main(int argc, char* argv[])
 {
@@ -270,10 +273,10 @@ int main(int argc, char* argv[])
 
 	Game game;
 	game.bolimInGame = true;
-	
+
 	game.blueBallsInGame = 2;
 	game.redBallsInGame = 2;
-	
+
 	Ball balls[BALLS];
 	for(int i=0 ; i<BALLS ; i++){
 		balls[i].radius = 0.1f;
@@ -369,7 +372,7 @@ int main(int argc, char* argv[])
 		  #define SPHERE_RED 2
         #define HAND 3
         #define PLANE 4
-		  
+
         // Desenhamos o plano do chão
         model = Matrix_Scale(WIDTH,1.0f,DEPTH/2) * Matrix_Translate(0.0f,-1.0f,-1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -392,7 +395,11 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
 			// Hand
-		   model = Matrix_Translate(handPosition.x,handPosition.y,handPosition.z) * Matrix_Rotate_X(M_PI/2) * Matrix_Rotate_Z(M_PI/2) * Matrix_Scale(0.01f,0.01f,0.01f);
+		   model = Matrix_Translate(handPosition.x,handPosition.y,handPosition.z)
+		   * Matrix_Rotate_X(M_PI/2)
+		   * Matrix_Rotate_Z(M_PI/2)
+		   * Matrix_Scale(0.01f,0.01f,0.01f)
+		   * Matrix_Rotate_X(g_AngleX);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, HAND);
         DrawVirtualObject("default");
@@ -410,7 +417,7 @@ int main(int argc, char* argv[])
 					if(i>j){
 						if( checkCollision(balls[i],balls[j]) ){
 							applyCollision(&balls[i],&balls[j]);
-						}	
+						}
 					}
 				}
 				balls[i].applyAmbientForces(t_delta);
@@ -447,7 +454,7 @@ int main(int argc, char* argv[])
 				}else {
 					printf("Vermelho ganhou");
 				}
-				toThrow = 8;		
+				toThrow = 8;
 			}
         glfwSwapBuffers(window);
         glfwPollEvents(); // Obtem os eventos
@@ -961,7 +968,7 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id)
         fprintf(stderr, "%s", output.c_str());
     }
 
-    // Os "Shader Objects" podem ser marcados para deleção após serem linkados 
+    // Os "Shader Objects" podem ser marcados para deleção após serem linkados
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
 
@@ -1097,7 +1104,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
     }
-	
+
 	if(key ==  GLFW_KEY_A && action == GLFW_PRESS){
 		if(g_x_increment > -1.0f)
 			g_x_increment -= 0.1f;
@@ -1231,7 +1238,7 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     if ( ellapsed_seconds > 1.0f )
     {
         numchars = snprintf(buffer, 20, "%.2f fps", ellapsed_frames / ellapsed_seconds);
-    
+
         old_seconds = seconds;
         ellapsed_frames = 0;
     }
