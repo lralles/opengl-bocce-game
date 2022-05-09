@@ -12,13 +12,23 @@ typedef struct {
 	int redBallsInGame = 0;
 	bool bolimInGame = false;
 	int gameState =  THROW_BOLIM;	
-}Game;
-
-bool hasMovement(Ball* balls){
-	for (int i = 0; i<BALLS ;i++){
-		if(norm_vec3(balls[i].velocity) != 0.0f)
-			return false;
+	bool hasMovement(Ball* balls){
+		for (int i = 0; i<BALLS ;i++){
+			if(norm_vec3(balls[i].velocity) != 0.0f)
+				return false;
+		}
+		return true;
 	}
-	return true;
-}
+	int getWinner(Ball* balls){
+		float smallestDistance = norm_vec3(balls[1].position - balls[0].position);
+		int smallest = 1;
+		for (int i = 2 ; i< BALLS ; i++){
+			if(norm_vec3(balls[i].position - balls[0].position)<smallestDistance){
+				smallestDistance = norm_vec3(balls[i].position - balls[0].position);
+				smallest = i;
+			}
+		}
+		return smallest;
+	}
+}Game;
 

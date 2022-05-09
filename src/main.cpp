@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
 	 int toThrow = 0;
 	 float t_prev = glfwGetTime();
 	 // Ficamos em loop, renderizando, até que o usuário feche a janela
-    while (!glfwWindowShouldClose(window))
+    while (!(glfwWindowShouldClose(window) || toThrow == 8))
     {
         // Aqui executamos as operações de renderização
 
@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -416,7 +416,7 @@ int main(int argc, char* argv[])
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
 			}
 
-
+			balls[toThrow].position = handPosition + glm::vec3(0,0.05f,0);
 			for ( int i = 0 ;i<toThrow+1 ; i++){
 				int id = BOLIM;
 				if(i>0){
@@ -431,20 +431,23 @@ int main(int argc, char* argv[])
 			}
 
 			if(g_release == true){
-				printf("opa\n");
 				balls[toThrow].position = handPosition;
-				balls[toThrow].velocity =glm::vec3(0.0f, g_velocity*0.6f, g_velocity*-0.8f);
+				balls[toThrow].velocity =glm::vec3(-g_x_increment*g_velocity, g_velocity*1.6f, g_velocity*-1.9f);
 				balls[toThrow].stationary = false;
 				balls[toThrow].onFloor = false;
 				g_velocity = 0.0f;
 				g_release = false;
 				toThrow ++;
 			}
-
         glfwSwapBuffers(window);
         glfwPollEvents(); // Obtem os eventos
     }
-
+	 int winner = game.getWinner(balls);
+	 if (winner%2 == 1){
+		 printf("Azul ganhou");
+	 }else {
+		  printf("Vermelho ganhou");
+	 }
     glfwTerminate();
     return 0;
 }
@@ -992,14 +995,11 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-		  printf("%f", g_velocity);
 		  g_velocity += 0.1f;
-		  printf("\t%f\n", g_velocity);
         g_LeftMouseButtonPressed = true;
     }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-		  printf("release");
         g_release = true;
         g_RightMouseButtonPressed = true;
     }

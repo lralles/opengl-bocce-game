@@ -42,6 +42,9 @@ void applyCollision(Ball* ball1, Ball* ball2){
 	}else{
 		ball2->stationary = true;
 	}
+
+	ball1->velocity.y = 0;
+	ball2->velocity.y = 0;
 }
 
 
