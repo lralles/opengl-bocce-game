@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include "collisions .h"
+#include "game.h"
 
 // Headers abaixo são específicos de C++
 #include <map>
@@ -93,7 +93,6 @@ void ErrorCallback(int error, const char* description);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -140,11 +139,10 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
+float g_x_increment = 0.0f;
 
-// Variáveis que controlam translação do torso
-float g_TorsoPositionX = 0.0f;
-float g_TorsoPositionY = 0.0f;
-
+float g_velocity = 0.0f;
+bool g_release = false;
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
 
@@ -194,7 +192,7 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 325612 - Leonardo Rezende Alles", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "BOCHA", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -202,11 +200,10 @@ int main(int argc, char* argv[])
         std::exit(EXIT_FAILURE);
     }
 
+
     // Definimos as callbacks
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    glfwSetCursorPosCallback(window, CursorPosCallback);
-    glfwSetScrollCallback(window, ScrollCallback);
 
     // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
     glfwMakeContextCurrent(window);
@@ -233,23 +230,21 @@ int main(int argc, char* argv[])
     // para renderização. Veja slides 176-196 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
     LoadShadersFromFiles();
 
-    // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
-    LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-	 LoadTextureImage("../../data/wood.jpg"); //Texture 3
+    LoadTextureImage("../../data/wood.jpg"); //Texture 0
+    LoadTextureImage("../../data/skin.jpg"); // texture 1
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    ObjModel bunnymodel("../../data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
+
+	 ObjModel handmodel("../../data/hand.obj");
+    ComputeNormals(&handmodel);
+    BuildTrianglesAndAddToVirtualScene(&handmodel);
 
     if ( argc > 1 )
     {
@@ -272,14 +267,21 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
-	// cria um vetor com 7 bolas e preenche ele com valores aleatorios para teste	
-	Ball balls[7];
-	for(int i=0 ; i<7 ; i++){
-		balls[i].position = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
-		balls[i].velocity = glm::vec3((float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1,(float)2*rand()/RAND_MAX-1);
+
+	Game game;
+	game.bolimInGame = true;
+	
+	game.blueBallsInGame = 2;
+	game.redBallsInGame = 2;
+	
+	Ball balls[BALLS];
+	for(int i=0 ; i<BALLS ; i++){
+		balls[i].radius = 0.1f;
+		balls[i].position = glm::vec3(-1.0f,float(i),4.0f);
+		balls[i].velocity = glm::vec3(0.0f,0.0f,0.0f);
 	}
 
-		  
+	 int toThrow = 0;
 	 float t_prev = glfwGetTime();
 	 // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -309,14 +311,16 @@ int main(int argc, char* argv[])
         float r = g_CameraDistance;
         float y = r*sin(g_CameraPhi);
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
-        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta) + g_x_increment;
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
         glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_lookat_l    = glm::vec4(g_x_increment,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+		  glm::vec3 handPosition = glm::vec3(x,y-0.5f,z-1.0f);
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -359,9 +363,11 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
+        #define BOLIM 0
+		  #define SPHERE_BLUE 1
+		  #define SPHERE_RED 2
+        #define HAND 3
+        #define PLANE 4
 		  
         // Desenhamos o plano do chão
         model = Matrix_Scale(WIDTH,1.0f,DEPTH/2) * Matrix_Translate(0.0f,-1.0f,-1.0f);
@@ -384,49 +390,57 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
+			// Hand
+		   model = Matrix_Translate(handPosition.x,handPosition.y,handPosition.z) * Matrix_Rotate_X(M_PI/2) * Matrix_Rotate_Z(M_PI/2) * Matrix_Scale(0.01f,0.01f,0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, HAND);
+        DrawVirtualObject("default");
+
 
 			// definicao do time_delta
 			float t_now = glfwGetTime();
 			float t_delta = t_now - t_prev;
 			t_delta *= 2.0f;
 			t_prev = t_now;
-			
 
 
-			// Para todas as bolas
-			for (int i = 0 ; i<7 ; i++){
-				// checa e aplica colisoes
-				for(int j=0 ; j<7; j++){
+			for (int i = 0 ; i<toThrow+1 ; i++){
+				for(int j=0 ; j<toThrow+1; j++){
 					if(i>j){
 						if( checkCollision(balls[i],balls[j]) ){
 							applyCollision(&balls[i],&balls[j]);
 						}	
 					}
 				}
-				// aplica forcas do ambiente -> atrito e gravidade
 				balls[i].applyAmbientForces(t_delta);
-				// Atualiza a posicao
 				balls[i].position = balls[i].position + t_delta * balls[i].velocity;
 			}
-			// desenha todas as bolas
-			for ( int i = 0 ;i<7 ; i++){
-				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z) 
-					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);        
+
+
+			for ( int i = 0 ;i<toThrow+1 ; i++){
+				int id = BOLIM;
+				if(i>0){
+					if(i%2 == 1) {id = SPHERE_BLUE;}
+				   else if(i%2 == 0) {id = SPHERE_RED;}
+				}
+				model = Matrix_Translate( balls[i].position.x,balls[i].position.y,balls[i].position.z)
+					* Matrix_Scale(balls[i].radius, balls[i].radius, balls[i].radius);
 				glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-				glUniform1i(object_id_uniform, SPHERE);
+				glUniform1i(object_id_uniform, id);
 				DrawVirtualObject("sphere");
 			}
-		  // Por infos na tela
-        TextRendering_ShowEulerAngles(window);
-        TextRendering_ShowProjection(window);
-        TextRendering_ShowFramesPerSecond(window);
 
-        // O framebuffer onde OpenGL executa as operações de renderização não
-        // é o mesmo que está sendo mostrado para o usuário, caso contrário
-        // seria possível ver artefatos conhecidos como "screen tearing". A
-        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
-        // tudo que foi renderizado pelas funções acima.
-        // Veja o link: Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
+			if(g_release == true){
+				printf("opa\n");
+				balls[toThrow].position = handPosition;
+				balls[toThrow].velocity =glm::vec3(0.0f, g_velocity*0.6f, g_velocity*-0.8f);
+				balls[toThrow].stationary = false;
+				balls[toThrow].onFloor = false;
+				g_velocity = 0.0f;
+				g_release = false;
+				toThrow ++;
+			}
+
         glfwSwapBuffers(window);
         glfwPollEvents(); // Obtem os eventos
     }
@@ -978,118 +992,30 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
-        // posição atual do cursor nas variáveis g_LastCursorPosX e
-        // g_LastCursorPosY.  Também, setamos a variável
-        // g_LeftMouseButtonPressed como true, para saber que o usuário está
-        // com o botão esquerdo pressionado.
-        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
+		  printf("%f", g_velocity);
+		  g_velocity += 0.1f;
+		  printf("\t%f\n", g_velocity);
         g_LeftMouseButtonPressed = true;
-    }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-    {
-        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
-        // variável abaixo para false.
-        g_LeftMouseButtonPressed = false;
     }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
-        // posição atual do cursor nas variáveis g_LastCursorPosX e
-        // g_LastCursorPosY.  Também, setamos a variável
-        // g_RightMouseButtonPressed como true, para saber que o usuário está
-        // com o botão esquerdo pressionado.
-        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
+		  printf("release");
+        g_release = true;
         g_RightMouseButtonPressed = true;
     }
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-    {
-        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
-        // variável abaixo para false.
-        g_RightMouseButtonPressed = false;
-    }
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
-    {
-        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
-        // posição atual do cursor nas variáveis g_LastCursorPosX e
-        // g_LastCursorPosY.  Também, setamos a variável
-        // g_MiddleMouseButtonPressed como true, para saber que o usuário está
-        // com o botão esquerdo pressionado.
-        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
-        g_MiddleMouseButtonPressed = true;
-    }
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE)
-    {
-        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
-        // variável abaixo para false.
-        g_MiddleMouseButtonPressed = false;
-    }
+	 if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
+	 {
+		 g_RightMouseButtonPressed = false;
+	 }
+	 if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	 {
+		 g_LeftMouseButtonPressed = false;
+	 }
 }
 
 // Função callback chamada sempre que o usuário movimentar o cursor do mouse em
 // cima da janela OpenGL.
-void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
-{
-    // Abaixo executamos o seguinte: caso o botão esquerdo do mouse esteja
-    // pressionado, computamos quanto que o mouse se movimento desde o último
-    // instante de tempo, e usamos esta movimentação para atualizar os
-    // parâmetros que definem a posição da câmera dentro da cena virtual.
-    // Assim, temos que o usuário consegue controlar a câmera.
 
-    if (g_LeftMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-    
-        // Atualizamos parâmetros da câmera com os deslocamentos
-        g_CameraTheta -= 0.01f*dx;
-        g_CameraPhi   += 0.01f*dy;
-    
-        // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
-        float phimax = 3.141592f/2;
-        float phimin = -phimax;
-    
-        if (g_CameraPhi > phimax)
-            g_CameraPhi = phimax;
-    
-        if (g_CameraPhi < phimin)
-            g_CameraPhi = phimin;
-    
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-
-    if (g_RightMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-    
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-
-    if (g_MiddleMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-    
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_TorsoPositionX += 0.01f*dx;
-        g_TorsoPositionY -= 0.01f*dy;
-    
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-}
 
 // Função callback chamada sempre que o usuário movimenta a "rodinha" do mouse.
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -1112,25 +1038,10 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
-    // ===============
-    // Não modifique este loop! Ele é utilizando para correção automatizada dos
-    // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
-    for (int i = 0; i < 10; ++i)
-        if (key == GLFW_KEY_0 + i && action == GLFW_PRESS && mod == GLFW_MOD_SHIFT)
-            std::exit(100 + i);
-    // ===============
 
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
-
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
 
     float delta = 3.141592 / 16; // 22.5 graus, em radianos.
 
@@ -1181,6 +1092,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
     }
+	
+	if(key ==  GLFW_KEY_A && action == GLFW_PRESS){
+		if(g_x_increment > -1.0f)
+			g_x_increment -= 0.1f;
+	}
+	if(key ==  GLFW_KEY_D && action == GLFW_PRESS){
+		if(g_x_increment < 1.0f)
+			g_x_increment += 0.1f;
+	}
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal

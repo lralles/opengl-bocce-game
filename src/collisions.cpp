@@ -2,6 +2,7 @@
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "collisions .h"
+#include <cstdio>
 
 // Checa se 2 bolas colidiram
 bool checkCollision(Ball ball1, Ball ball2){
@@ -41,15 +42,6 @@ void applyCollision(Ball* ball1, Ball* ball2){
 	}else{
 		ball2->stationary = true;
 	}
-	
-	if(ball1->velocity.y < 0.0f){
-		ball1->velocity.y = 0.0f;
-	}
-	if(ball2->velocity.y < 0.0f){
-		ball2->velocity.y = 0.0f;
-	}
-
-
 }
 
 
