@@ -2,3 +2,4 @@ lib
 lib-linux
 bin
 .vscode
+include/
